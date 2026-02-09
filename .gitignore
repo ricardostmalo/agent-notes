@@ -1,0 +1,6 @@
+node_modules/
+.DS_Store
+
+# Local caches created by semantic search
+.cache/
+

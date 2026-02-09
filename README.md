@@ -1,31 +1,79 @@
-# Agent Notes (Ricky internal package)
+# agent-notes
 
-This package contains the reference implementation for Ricky's repo memory system and local transcript search tooling.
+Lightweight tools for agentic engineering workflows:
 
-It is designed to be:
-- fast to run (pure Node.js, no database)
-- deterministic (git-tracked notes; cached embeddings)
-- safe by default (keyword search is local-only; semantic search warns before sending text to a provider)
+- **Repo memory**: `MEMORY.md` + `memory/YYYY-MM-DD.md` with keyword (BM25) and optional semantic search.
+- **Transcript search**: keyword search across local **Codex** + **Claude Code** JSONL transcripts.
 
-## Commands
+The goal is to make agent work feel like normal engineering work: searchable, repeatable, and reviewable.
 
-These are typically invoked via `pnpm` scripts in the repo root:
+## Install
 
-```bash
-pnpm memory:init
-pnpm memory:flush -- --auto
-pnpm memory:search "query"
-pnpm memory:search "query" -- --semantic
+This repo is designed to work as either:
+- a **CLI in a repo** (recommended: add as a dev dependency), or
+- a **cloned utility repo** (run with `node`).
 
-pnpm conversations:search "query" -- --source all --since 2026-02-07
-```
+### Option A: Use as a dev dependency (recommended)
 
-You can also invoke the CLI directly:
+Add to your repo:
 
 ```bash
-pnpm agent-notes memory init
-pnpm agent-notes conversations search "worktree" --since 2026-02-07
+pnpm add -D github:ricardostmalo/agent-notes
 ```
+
+Then add scripts:
+
+```json
+{
+  "scripts": {
+    "memory:init": "agent-notes memory init",
+    "memory:flush": "agent-notes memory flush --auto",
+    "memory:search": "agent-notes memory search",
+    "conversations:search": "agent-notes conversations search"
+  }
+}
+```
+
+### Option B: Clone and run
+
+```bash
+git clone https://github.com/ricardostmalo/agent-notes.git
+cd agent-notes
+node cli.mjs --help
+```
+
+## Quickstart
+
+Initialize memory files:
+
+```bash
+agent-notes memory init
+```
+
+Search memory (keyword BM25):
+
+```bash
+agent-notes memory search "inbound queue"
+```
+
+Search memory (hybrid keyword + embeddings):
+
+```bash
+agent-notes memory search "what did we decide about webhooks" --semantic
+```
+
+Search transcripts (Codex + Claude Code):
+
+```bash
+agent-notes conversations search "worktree" --since 2026-02-07 --source all
+```
+
+## Memory Layout (Reference)
+
+- `MEMORY.md`: durable, curated decisions and lessons.
+- `memory/YYYY-MM-DD.md`: daily raw session notes.
+
+See `templates/` for a starting point you can copy into a repo.
 
 ## What Gets Indexed
 
@@ -33,15 +81,15 @@ Memory search indexes only:
 - `MEMORY.md`
 - `memory/*.md`
 
-Conversation search reads local JSONL transcripts:
+Transcript search reads local JSONL transcripts:
 - Claude Code: `~/.claude/projects/**.jsonl`
-- Codex: `~/.codex/sessions/**.jsonl` (and `~/.codex/archived_sessions/**.jsonl` when present)
+- Codex: `~/.codex/sessions/**.jsonl` and `~/.codex/archived_sessions/**.jsonl`
 
 ## Configuration
 
 Environment variables:
 - `MEMORY_TZ` (default: `America/Panama`)
-- `OPENAI_API_KEY` (required for `pnpm memory:search -- --semantic`)
+- `OPENAI_API_KEY` (required for semantic memory search)
 - `AGENT_NOTES_CLAUDE_PROJECTS_DIR` (override Claude transcript root; default `~/.claude/projects`)
 - `AGENT_NOTES_CODEX_DIR` (override Codex directory; default `~/.codex`)
 
@@ -49,4 +97,8 @@ Environment variables:
 
 - Keyword search is local-only (no network).
 - Semantic memory search sends chunk text to the embeddings provider. The tool prints a warning and applies best-effort secret redaction, but you should still avoid putting secrets in memory files.
+
+## License
+
+Apache-2.0. See `LICENSE`.
 

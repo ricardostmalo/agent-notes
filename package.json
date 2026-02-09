@@ -1,12 +1,32 @@
 {
-  "name": "@ricky/agent-notes",
-  "version": "0.0.1",
-  "private": true,
+  "name": "agent-notes",
+  "version": "0.1.0",
+  "description": "Repo memory + local transcript search tools for agentic coding",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ricardostmalo/agent-notes.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ricardostmalo/agent-notes/issues"
+  },
+  "homepage": "https://github.com/ricardostmalo/agent-notes#readme",
   "type": "module",
+  "engines": {
+    "node": ">=20.10.0"
+  },
   "bin": {
     "agent-notes": "./cli.mjs"
   },
   "exports": {
     ".": "./src/index.mjs"
-  }
+  },
+  "files": [
+    "cli.mjs",
+    "src/",
+    "templates/",
+    "README.md",
+    "LICENSE"
+  ]
+}
 }
