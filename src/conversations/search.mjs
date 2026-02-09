@@ -58,7 +58,8 @@ function getRepoName() {
 // ---------------------------------------------------------------------------
 
 function discoverClaudeProjectDirs(repoName) {
-  const claudeProjectsDir = path.join(os.homedir(), '.claude', 'projects');
+  const claudeProjectsDir =
+    process.env.AGENT_NOTES_CLAUDE_PROJECTS_DIR ?? path.join(os.homedir(), '.claude', 'projects');
   if (!fs.existsSync(claudeProjectsDir)) return [];
 
   return fs
@@ -80,7 +81,7 @@ function discoverClaudeProjectDirs(repoName) {
 
 function discoverCodexSessionFiles(repoName) {
   const files = [];
-  const codexDir = path.join(os.homedir(), '.codex');
+  const codexDir = process.env.AGENT_NOTES_CODEX_DIR ?? path.join(os.homedir(), '.codex');
 
   // Load session index for thread names
   const indexPath = path.join(codexDir, 'session_index.jsonl');
@@ -215,6 +216,13 @@ function extractClaudeText(message) {
     }
   }
   return parts.join('\n');
+}
+
+function encodeClaudeProjectDirFromRepoRoot(repoRoot) {
+  // Claude project dirs encode the absolute path by swapping separators for '-'.
+  // Example: /Users/alice/code/myrepo => -Users-alice-code-myrepo
+  const normalized = path.resolve(repoRoot);
+  return normalized.split(path.sep).join('-');
 }
 
 /** Extract text from a Codex response_item payload */
@@ -595,9 +603,8 @@ export async function main(argv = process.argv.slice(2)) {
     const sessionShort = doc.sessionId.slice(0, 8);
     const src = doc.source === 'codex' ? 'codex' : 'claude';
     let location = doc.projectDir;
-    if (doc.source === 'claude' && doc.projectDir === `-Users-ricardo-Github-${repoName}`) {
-      location = 'main';
-    }
+    const encodedRepoRoot = encodeClaudeProjectDirFromRepoRoot(getRepoRoot());
+    if (doc.source === 'claude' && doc.projectDir === encodedRepoRoot) location = 'main';
 
     process.stdout.write(
       `${i + 1}. score=${doc.score.toFixed(3)}  ${doc.sessionDate || '?'}  [${doc.role}]  ${src}  session=${sessionShort} (${location})\n`,
